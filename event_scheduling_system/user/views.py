@@ -1,8 +1,8 @@
-from django.contrib.auth import login, logout
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authtoken.models import Token
 
 from user.serializers import (
     OrganizerSerializer, CustomerSerializer,
@@ -20,10 +20,13 @@ class OrganizerRegistrationView(APIView):
         serializer = OrganizerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             organizer = serializer.save()
+            # Create token for the new user
+            token, created = Token.objects.get_or_create(user=organizer.user)
             return Response({
                 'message': 'Organizer registered successfully',
                 'organizer_id': organizer.id,
-                'username': organizer.user.username
+                'username': organizer.user.username,
+                'token': token.key
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -38,10 +41,13 @@ class CustomerRegistrationView(APIView):
         serializer = CustomerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             customer = serializer.save()
+            # Create token for the new user
+            token, created = Token.objects.get_or_create(user=customer.user)
             return Response({
                 'message': 'Customer registered successfully',
                 'customer_id': customer.id,
-                'username': customer.user.username
+                'username': customer.user.username,
+                'token': token.key
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -56,13 +62,14 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            login(request, user)
+            token, created = Token.objects.get_or_create(user=user)
             
             # Determine user type and return appropriate data
             response_data = {
                 'user_id': user.id,
                 'username': user.username,
                 'email': user.email,
+                'token': token.key
             }
             
             # Check if user is an organizer
@@ -82,12 +89,12 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     """
-    API endpoint for user logout.
+    API endpoint for user logout (delete token from database).
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logout(request)
+        Token.objects.filter(user=request.user).delete()
         return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
 
