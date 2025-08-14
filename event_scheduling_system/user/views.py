@@ -1,88 +1,18 @@
-from django.contrib.auth.models import User
 from django.contrib.auth import login, logout
-from rest_framework import permissions, viewsets, status
-from rest_framework.decorators import action
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from user.serializers import (
-    UserSerializer, OrganizerSerializer, CustomerSerializer,
+    OrganizerSerializer, CustomerSerializer,
     OrganizerRegistrationSerializer, CustomerRegistrationSerializer,
-    LoginSerializer, UserTypeResponseSerializer
+    LoginSerializer
 )
-from user.models import Organizer, Customer
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to view and edit their own profile.
-    """
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        # Users can only see their own user profile
-        return User.objects.filter(id=self.request.user.id)
-
-    def perform_update(self, serializer):
-        # Ensure only the owner can update
-        if serializer.instance.id != self.request.user.id:
-            raise permissions.PermissionDenied("You can only update your own profile")
-        serializer.save()
-
-
-class OrganizerViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for Organizer CRUD operations.
-    """
-    serializer_class = OrganizerSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        # Users can only see their own organizer profile
-        if hasattr(self.request.user, 'organizer_profile'):
-            return Organizer.objects.filter(user=self.request.user)
-        return Organizer.objects.none()
-
-    def perform_create(self, serializer):
-        # Ensure the organizer is created for the current user
-        serializer.save(user=self.request.user)
-
-    def perform_update(self, serializer):
-        # Ensure only the owner can update
-        if serializer.instance.user != self.request.user:
-            raise permissions.PermissionDenied("You can only update your own profile")
-        serializer.save()
-
-
-class CustomerViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for Customer CRUD operations.
-    """
-    serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        # Users can only see their own customer profile
-        if hasattr(self.request.user, 'customer_profile'):
-            return Customer.objects.filter(user=self.request.user)
-        return Customer.objects.none()
-
-    def perform_create(self, serializer):
-        # Ensure the customer is created for the current user
-        serializer.save(user=self.request.user)
-
-    def perform_update(self, serializer):
-        # Ensure only the owner can update
-        if serializer.instance.user != self.request.user:
-            raise permissions.PermissionDenied("You can only update your own profile")
-        serializer.save()
-
 
 class OrganizerRegistrationView(APIView):
     """
-    API endpoint for Organizer registration.
+    API endpoint for Organizer registration. Only allow POST requests.
     """
     permission_classes = [AllowAny]
 
@@ -100,7 +30,7 @@ class OrganizerRegistrationView(APIView):
 
 class CustomerRegistrationView(APIView):
     """
-    API endpoint for Customer registration.
+    API endpoint for Customer registration. Only allow POST requests.
     """
     permission_classes = [AllowAny]
 
@@ -118,7 +48,7 @@ class CustomerRegistrationView(APIView):
 
 class LoginView(APIView):
     """
-    API endpoint for user login.
+    API endpoint for user login. Only allow POST requests.
     """
     permission_classes = [AllowAny]
 
@@ -145,7 +75,7 @@ class LoginView(APIView):
                 response_data['profile_data'] = CustomerSerializer(user.customer_profile).data
             else:
                 response_data['user_type'] = 'user'
-                response_data['profile_data'] = {}            
+                response_data['profile_data'] = {}
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -163,11 +93,12 @@ class LogoutView(APIView):
 
 class UserProfileView(APIView):
     """
-    API endpoint to get current user's profile information.
+    API endpoint to get and update current user's profile information.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Get current user's profile information."""
         user = request.user
         
         response_data = {
@@ -191,3 +122,35 @@ class UserProfileView(APIView):
             response_data['profile_data'] = {}
         
         return Response(response_data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        """Partially update current user's profile information."""
+        user = request.user
+        
+        # Update User fields
+        user_data = {}
+        for field in ['first_name', 'last_name', 'email']:
+            if field in request.data:
+                user_data[field] = request.data[field]
+        
+        if user_data:
+            for field, value in user_data.items():
+                setattr(user, field, value)
+            user.save()
+        
+        # Update profile based on user type
+        if hasattr(user, 'organizer_profile'):
+            serializer = OrganizerSerializer(user.organizer_profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif hasattr(user, 'customer_profile'):
+            serializer = CustomerSerializer(user.customer_profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Return updated profile
+        return self.get(request)

@@ -5,12 +5,6 @@ from rest_framework.validators import UniqueValidator
 from .models import Organizer, Customer
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
-        fields = ['url', 'username', 'email', 'groups']
-
-
 class OrganizerSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
@@ -120,11 +114,3 @@ class LoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError('Invalid credentials')
         else:
             raise serializers.ValidationError('Must include username and password')
-
-
-class UserTypeResponseSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
-    username = serializers.CharField()
-    email = serializers.EmailField()
-    user_type = serializers.CharField()
-    profile_data = serializers.DictField()
