@@ -1,14 +1,19 @@
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
+from drf_spectacular.utils import extend_schema, OpenApiExample
 
 from user.serializers import (
     OrganizerSerializer, CustomerSerializer,
     OrganizerRegistrationSerializer, CustomerRegistrationSerializer,
     LoginSerializer
 )
+from user.models import Organizer, Customer
+
 
 class OrganizerRegistrationView(APIView):
     """
@@ -16,6 +21,24 @@ class OrganizerRegistrationView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        request=OrganizerRegistrationSerializer,
+        responses={201: OrganizerRegistrationSerializer},
+        examples=[
+            OpenApiExample(
+                'Organizer Registration Example',
+                value={
+                    'username': 'organizer1',
+                    'email': 'organizer@example.com',
+                    'password': 'securepassword123',
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'organization_name': 'Event Pro',
+                    'business_address': '123 Main St, City, State'
+                }
+            )
+        ]
+    )
     def post(self, request):
         serializer = OrganizerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -37,6 +60,22 @@ class CustomerRegistrationView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        request=CustomerRegistrationSerializer,
+        responses={201: CustomerRegistrationSerializer},
+        examples=[
+            OpenApiExample(
+                'Customer Registration Example',
+                value={
+                    'username': 'customer1',
+                    'email': 'customer@example.com',
+                    'password': 'securepassword123',
+                    'first_name': 'Jane',
+                    'last_name': 'Smith'
+                }
+            )
+        ]
+    )
     def post(self, request):
         serializer = CustomerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -58,6 +97,19 @@ class LoginView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        request=LoginSerializer,
+        responses={200: LoginSerializer},
+        examples=[
+            OpenApiExample(
+                'Login Example',
+                value={
+                    'username': 'user1',
+                    'password': 'password123'
+                }
+            )
+        ]
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -93,6 +145,10 @@ class LogoutView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        responses={200: None},
+        description="Logout and delete user token from database"
+    )
     def post(self, request):
         Token.objects.filter(user=request.user).delete()
         return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
@@ -104,8 +160,19 @@ class UserProfileView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        responses={200: OrganizerSerializer},
+        description="Get current user's profile information"
+    )
     def get(self, request):
         """Get current user's profile information."""
+        # Explicitly check authentication
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'Authentication credentials were not provided.'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         user = request.user
         
         response_data = {
@@ -130,6 +197,11 @@ class UserProfileView(APIView):
         
         return Response(response_data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=OrganizerSerializer,
+        responses={200: OrganizerSerializer},
+        description="Partially update current user's profile information"
+    )
     def patch(self, request):
         """Partially update current user's profile information."""
         user = request.user
