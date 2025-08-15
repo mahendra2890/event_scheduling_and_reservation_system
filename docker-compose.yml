@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./event_scheduling_system
+      dockerfile: ../Dockerfile
+    container_name: event_scheduler_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the project directory for development (hot reload)
+      - ./event_scheduling_system:/app
+      # Exclude node_modules and other unnecessary files
+      - /app/venv
+      - /app/.git
+      - /app/__pycache__
+      - /app/*/__pycache__
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=event_scheduling_system.settings
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+    command: python manage.py runserver 0.0.0.0:8000
+    networks:
+      - event_scheduler_network
+
+  # Future database service (commented out for now)
+  # db:
+  #   image: postgres:15
+  #   container_name: event_scheduler_db
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_DB=event_scheduler
+  #     - POSTGRES_USER=event_scheduler
+  #     - POSTGRES_PASSWORD=event_scheduler_password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - event_scheduler_network
+
+networks:
+  event_scheduler_network:
+    driver: bridge
+
+# Future volumes (commented out for now)
+# volumes:
+#   postgres_data:
