@@ -69,8 +69,36 @@ class BookingSerializer(serializers.ModelSerializer):
         validated_data['attendee'] = user.customer_profile
         event = validated_data['event']
         
-        # Refresh event from database to get latest booking count
-        event.refresh_from_db()
+        # Lock the event row to prevent concurrent modifications
+        event = event.__class__.objects.select_for_update().get(id=event.id)
+        
+        # Re-check capacity after locking
+        if event.is_full:
+            raise serializers.ValidationError({
+                'event': 'This event is at full capacity. No more bookings available.'
+            })
         
         booking = super().create(validated_data)
         return booking
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        """
+        Update booking with atomic transaction to prevent race conditions.
+        """
+        # If we're reactivating a cancelled booking, we need to check capacity
+        if (instance.status == 'cancelled' and 
+            validated_data.get('status') == 'active'):
+            
+            event = validated_data.get('event', instance.event)
+            
+            # Lock the event row to prevent concurrent modifications
+            event = event.__class__.objects.select_for_update().get(id=event.id)
+            
+            # Re-check capacity after locking
+            if event.is_full:
+                raise serializers.ValidationError({
+                    'event': 'This event is at full capacity. Cannot reactivate booking.'
+                })
+        
+        return super().update(instance, validated_data)

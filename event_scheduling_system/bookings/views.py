@@ -16,7 +16,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.select_related('attendee__user', 'event').all()
     serializer_class = BookingSerializer
     """
-    Minimal Booking CRUD:
+    Booking CRUD:
     - GET /bookingapi/booking/ : list of all bookings for customers; booking for their own events for organizers
     - POST /bookingapi/booking/ : Creates a booking for customers, 403 for organisers
     - GET /bookingapi/booking/{id}/ : Attendee can see their bookings with ID; and organisers can see all bookings for their events with ID; 403 for other events' booking
