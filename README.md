@@ -13,6 +13,10 @@ If you don't want to go the docker container way. Install a virtual environment 
 - python manage.py runserver to run the server on localhost.
 - Find swagger here: http://127.0.0.1:8000/api/docs/ ; and test all APIs; see all schemas and what not
 
+<img width="784" height="762" alt="Screenshot 2025-08-16 at 12 30 17 AM" src="https://github.com/user-attachments/assets/2145df26-f55b-42b0-9a78-5955c8a009a7" />
+
+
+
 Please note that it is advisable to delete the db.sqlite3 file : I have kept it so there is some data to start with even as you do it for the first time
 
 
