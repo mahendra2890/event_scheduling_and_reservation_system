@@ -15,9 +15,9 @@ class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
     """
     Minimal Booking CRUD:
-    - GET /bookingapi/booking/ : list of all bookings for customers
+    - GET /bookingapi/booking/ : list of all bookings for customers; booking for their own events for organizers
     - POST /bookingapi/booking/ : Creates a booking for customers, 403 for organisers
-    - GET /bookingapi/booking/{id}/ : Attendee can see their bookings with ID; and organisers can see all bookings with ID
+    - GET /bookingapi/booking/{id}/ : Attendee can see their bookings with ID; and organisers can see all bookings for their events with ID; 403 for other events' booking
     - PATCH /bookingapi/booking/{id}/ : Updates a booking, if booking's attendee; 403 for organisers
     - DELETE /bookingapi/booking/{id}/ : Hard deletes a booking, if booking's attendee; 403 for organisers
     """
