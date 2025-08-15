@@ -7,3 +7,4 @@ __pycache__/
 event_scheduling_system/event_scheduling_system/db.sqlite3
 event_scheduling_system/db.sqlite3
 *migrations*
+event_scheduling_system/test_env/*

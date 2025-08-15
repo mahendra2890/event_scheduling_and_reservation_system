@@ -68,7 +68,8 @@ class EventViewSet(viewsets.ModelViewSet):
         }
         response = super().update(request, *args, **kwargs)
         if response.status_code == 200:
-            updated_instance = self.get_serializer().instance
+            # Get the updated instance from the response
+            updated_instance = self.get_object()
             HistoryPoint.log_action(
                 user=request.user,
                 action=HistoryPoint.ACTION_UPDATE,
