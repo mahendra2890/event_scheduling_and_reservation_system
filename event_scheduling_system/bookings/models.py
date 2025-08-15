@@ -29,3 +29,17 @@ class Booking(models.Model):
     def __str__(self) -> str:
         attendee_name = self.attendee.user.username if self.attendee and self.attendee.user else 'unknown'
         return f"Booking(attendee={attendee_name}, event={self.event_id}, status={self.status})"
+
+    def cancel(self):
+        """
+        Cancel the booking if it's still active and the event hasn't started.
+        """
+        if self.status != self.STATUS_ACTIVE:
+            raise ValueError("Only active bookings can be cancelled.")
+        
+        if self.event.is_ongoing or self.event.is_past:
+            raise ValueError("Cannot cancel booking for events that have already started or ended.")
+        
+        self.status = self.STATUS_CANCELLED
+        self.save()
+        return self

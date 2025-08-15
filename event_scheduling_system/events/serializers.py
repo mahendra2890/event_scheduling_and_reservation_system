@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Event
-from user.serializers import OrganizerSerializer  # use organizer serializer
+from user.serializers import OrganizerSerializer
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -8,12 +8,13 @@ class EventSerializer(serializers.ModelSerializer):
     
     creator = OrganizerSerializer(read_only=True)
     available_slots = serializers.ReadOnlyField()
+    is_full = serializers.ReadOnlyField()
     
     class Meta:
         model = Event
         fields = [
             'id', 'title', 'description', 'start_time', 'end_time',
-            'capacity', 'available_slots', 'creator', 'created_at', 'updated_at'
+            'capacity', 'available_slots', 'is_full', 'creator', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'creator', 'created_at', 'updated_at']
 
@@ -45,5 +46,3 @@ class EventSerializer(serializers.ModelSerializer):
         """
         validated_data['creator'] = self.context['request'].user.organizer_profile
         return super().create(validated_data)
-
-

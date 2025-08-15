@@ -55,12 +55,15 @@ class Event(models.Model):
     @property
     def available_slots(self):
         """
-        Calculate available slots.
-        For now, returns capacity since no booking system exists yet.
+        Calculate available slots based on active bookings.
         """
-        # TODO: Update this when booking system is implemented
-        # return self.capacity - self.bookings.count()
-        return self.capacity
+        active_bookings_count = self.bookings.filter(status='active').count()
+        return max(0, self.capacity - active_bookings_count)
+
+    @property
+    def is_full(self):
+        """Check if the event is at full capacity."""
+        return self.available_slots <= 0
 
     @property
     def is_past(self):
