@@ -1,4 +1,4 @@
-# Use Python 3.9 Alpine image for smaller size and security
+# Use Python 3.9 Alpine image for development
 FROM python:3.9-alpine3.13  
 
 # Set environment variables

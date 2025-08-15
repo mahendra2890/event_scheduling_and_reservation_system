@@ -8,18 +8,6 @@ drf-spectacular==0.26.5
 # Filtering and Search
 django-filter==23.5
 
-# Database (for future PostgreSQL support)
-psycopg2-binary==2.9.9
-
-# Environment variables
-python-decouple==3.8
-
-# Production server (for production deployment)
-gunicorn==21.2.0
-
-# Security
-django-cors-headers==4.3.1
-
 # Development and testing
 pytest==7.4.3
 pytest-django==4.7.0

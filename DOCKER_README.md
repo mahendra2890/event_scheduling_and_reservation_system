@@ -1,7 +1,7 @@
 #Auto generated file - might be incorrect
-# Docker Setup for Event Scheduling System
+# Docker Development Setup for Event Scheduling System
 
-This document provides instructions for running the Event Scheduling System using Docker.
+This document provides instructions for running the Event Scheduling System using Docker for development.
 
 ## Prerequisites
 
@@ -188,36 +188,7 @@ docker-compose exec web python manage.py makemigrations
 docker-compose exec web python manage.py migrate
 ```
 
-## Production Considerations
 
-### 1. Security
-
-- Change `SECRET_KEY` in production
-- Set `DEBUG=False`
-- Use proper `ALLOWED_HOSTS`
-- Enable HTTPS
-- Use production database (PostgreSQL)
-
-### 2. Performance
-
-- Use Gunicorn instead of Django dev server
-- Enable static file serving
-- Use CDN for static files
-- Configure caching
-
-### 3. Production Dockerfile
-
-For production, consider:
-
-```dockerfile
-# Use multi-stage build
-FROM python:3.11-slim as builder
-# ... build dependencies
-
-FROM python:3.11-slim as production
-# ... copy from builder
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "event_scheduling_system.wsgi:application"]
-```
 
 ## Troubleshooting
 
@@ -278,7 +249,7 @@ Once running, access these endpoints:
 
 ## Next Steps
 
-1. **Add PostgreSQL**: Uncomment database service in docker-compose.yml
+1. **Add PostgreSQL**: Uncomment database service in docker-compose.yml when needed
 2. **Add Redis**: For caching and session storage
 3. **Add Nginx**: For reverse proxy and static files
 4. **Add CI/CD**: GitHub Actions or GitLab CI
